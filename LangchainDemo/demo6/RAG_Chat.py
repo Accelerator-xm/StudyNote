@@ -1,15 +1,16 @@
 import os
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.append(project_root)
+
+from langchain_community.chat_models.tongyi import ChatTongyi
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
-from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables import RunnableWithMessageHistory, RunnableLambda, RunnablePassthrough
+from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_chroma import Chroma
-from langchain.schema import Document
 from langchain.embeddings import HuggingFaceEmbeddings
-from langchain_community.tools.tavily_search import TavilySearchResults
-from langgraph.prebuilt import chat_agent_executor
 from langchain_community.document_loaders import WebBaseLoader
 import bs4
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -32,11 +33,15 @@ my_dashscope_api_key = my_api_key.DashScope_API_KEY
 # RAG对话应用
 
 # 创建模型
-model = ChatOpenAI(
-    model="openai/gpt-3.5-turbo-1106", 
-    temperature=0,
-    openai_api_key="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",
-    openai_api_base="https://openrouter.ai/api/v1"
+# model = ChatOpenAI(
+#     model="openai/gpt-3.5-turbo-1106", 
+#     temperature=0,
+#     openai_api_key="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",
+#     openai_api_base="https://openrouter.ai/api/v1"
+# )
+model = ChatTongyi(
+    api_key=my_dashscope_api_key,
+    model="qwen-turbo"
 )
 
 # 加载数据：本地数据库、本地word文档等
@@ -157,11 +162,11 @@ res1 = result_chain.invoke(
 print(res1['answer'])
 
 # 第二轮对话
-res1 = result_chain.invoke(
+res2 = result_chain.invoke(
     {'input':'它有哪些常用的方法'},
     config={'configurable': {'session_id': 'zs123456'}}
 )
-print(res1['answer'])
+print(res2['answer'])
 
 
 
