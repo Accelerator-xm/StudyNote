@@ -1,4 +1,10 @@
 import os
+import sys
+# 添加 LangchainDemo 目录到模块路径
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.append(project_root)
+
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
@@ -55,7 +61,7 @@ model = ChatTongyi(
 """
 ## 加载存储的向量数据库
 """
-persist_dir = 'chroma_data_dir' # 存放向量数据库的目录
+persist_dir = 'LangchainDemo/demo8/chroma_data_dir' # 存放向量数据库的目录
 
 # 存储模型
 embedding_model = HuggingFaceEmbeddings(

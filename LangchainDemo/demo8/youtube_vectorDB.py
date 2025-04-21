@@ -1,4 +1,10 @@
 import os
+import sys
+# 添加 LangchainDemo 目录到模块路径
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.append(project_root)
+
 from langchain_chroma import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -28,7 +34,7 @@ model = ChatTongyi(
     model="qwen-turbo"
 )
 
-persist_dir = 'chroma_data_dir' # 存放向量数据库的目录
+persist_dir = 'LangchainDemo/demo8/chroma_data_dir' # 存放向量数据库的目录
 
 # 初始化一些youtube视频
 urls = [

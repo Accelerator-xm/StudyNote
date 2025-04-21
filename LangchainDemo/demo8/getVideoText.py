@@ -3,7 +3,7 @@ import random, time, datetime, re
 from yt_dlp import YoutubeDL
 from langchain.docstore.document import Document
 
-COOKIE_FILE = "demo/LangchainDemo/www.youtube.com_cookies.txt"
+COOKIE_FILE = "LangchainDemo/demo8/www.youtube.com_cookies.txt"
 
 def get_video_id(url: str) -> str | None:
     m = re.search(r"(?:v=|/)([0-9A-Za-z_-]{11})", url)

@@ -1,4 +1,10 @@
 import os
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.append(project_root)
+
+from langchain_community.chat_models.tongyi import ChatTongyi
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
@@ -23,11 +29,16 @@ my_dashscope_api_key = my_api_key.DashScope_API_KEY
 # 使用链完成数据库查询
 
 # 创建模型
-model = ChatOpenAI(
-    model="openai/gpt-3.5-turbo-1106", 
-    temperature=0,
-    openai_api_key="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",
-    openai_api_base="https://openrouter.ai/api/v1"
+# 免费额度到期换个模型
+# model = ChatOpenAI(
+#     model="openai/gpt-3.5-turbo-1106", 
+#     temperature=0,
+#     openai_api_key="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",
+#     openai_api_base="https://openrouter.ai/api/v1"
+# )
+model = ChatTongyi(
+    api_key=my_dashscope_api_key,
+    model="qwen-turbo"
 )
 
 # 连接数据库 sqlalchemy

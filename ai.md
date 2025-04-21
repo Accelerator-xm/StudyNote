@@ -534,7 +534,7 @@ def load_youtube_video(url: str):
 持久化存储向量数据库
 
 ```python
-persist_dir = 'chroma_data_dir' # 存放向量数据库的目录
+persist_dir = 'LangchainDemo/demo8/chroma_data_dir' # 存放向量数据库的目录
 
 # 初始化一些youtube视频
 urls = [
@@ -585,7 +585,7 @@ vector_store = Chroma.from_documents(documents=split_docs, embedding=embedding_m
 
 加载数据库并进行智能化检索
 ```python
-persist_dir = 'chroma_data_dir' # 存放向量数据库的目录
+persist_dir = 'LangchainDemo/demo8/chroma_data_dir' # 存放向量数据库的目录
 
 # 存储模型
 embedding_model = HuggingFaceEmbeddings(
