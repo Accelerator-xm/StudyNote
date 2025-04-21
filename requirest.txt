@@ -7,3 +7,5 @@ dashscope
 "langserve[all]"
 sentence-transformers
 langgraph
+youtube-transcript-api
+yt_dlp

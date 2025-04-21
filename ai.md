@@ -454,6 +454,192 @@ res = agent_executor.invoke({"messages": "请问联系人里哪个省份人最�
 print(res['messages'][-1])
 ```
 
+### langchain检索YouTube视频字幕
 
+- youtube-transcript-api pytube
+    - 获取视频字幕的接口
+    - 数据抓取：利用公开接口，能够搜索到视频的元数据
+    - 字幕提取：如果视频有内置字幕，该API可以下载
 
+- yt_dlp
+    - 用 yt_dlp 替代 pytube 来抓取 YouTube 视频信息（比如标题、发布日期、字幕等），是个更稳定的方案。
+    - 但这就需要自定义 Loader。
 
+- HTTP Error 429: Too Many Requests
+    - 向 YouTube 发了太多请求（可能是批量下载、频繁调用等），所以 YouTube 认为你是爬虫，临时拒绝你的访问。
+    - 使用 --cookies-from-browser 或 --cookies
+
+- 用浏览器 cookies（推荐）
+    - 安装 Get cookies.txt
+    - 打开你已登录 YouTube 的浏览器页面，导出 cookies.txt。
+
+使用yt_dlp爬取YouTube字幕
+
+```python
+COOKIE_FILE = "your_cookies.txt"
+
+def get_video_id(url: str) -> str | None:
+    m = re.search(r"(?:v=|/)([0-9A-Za-z_-]{11})", url)
+    return m.group(1) if m else None
+
+def load_youtube_video(url: str):
+    video_id = get_video_id(url)
+    if not video_id:
+        raise ValueError("URL 无法解析到视频 ID")
+
+    # ① 先取元数据
+    ydl_opts = {
+        "quiet": True,
+        "cookiefile": COOKIE_FILE,
+        "sleep_interval": 1,
+        "max_sleep_interval": 3,
+    }
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+
+    # ② 取字幕 —— 把 cookie 也传进去，并做退避
+    for _ in range(4):                       # 最多 4 次指数退避
+        try:
+            transcript = YouTubeTranscriptApi.get_transcript(
+                video_id,
+                languages=['zh-Hans', 'zh-Hant', 'en'],
+                cookies=COOKIE_FILE          # ← 关键：同一份 cookie
+            )
+            break
+        except TranscriptsDisabled:
+            print(f"该视频无字幕: {url}")
+            return []
+        except Exception as e:               # 429、IP 被封等
+            wait = random.uniform(2, 6)
+            print(f"取字幕失败：{e}，{wait:.1f}s 后重试…")
+            time.sleep(wait)
+    else:
+        raise RuntimeError("重试后仍无法获取字幕")
+
+    full_text = "\n".join(seg['text'] for seg in transcript)
+
+    publish_date = info.get('upload_date')   # '20240312'
+    publish_date = (datetime.datetime.strptime(publish_date, '%Y%m%d')
+                    .isoformat() if publish_date else 'Unknown')
+    metadata = {
+        "title": info.get('title', 'Unknown'),
+        "channel": info.get('channel', 'Unknown'),
+        "publish_date": publish_date,
+        "video_id": video_id,
+        "url": url,
+    }
+    return [Document(page_content=full_text, metadata=metadata)]
+```
+
+持久化存储向量数据库
+
+```python
+persist_dir = 'chroma_data_dir' # 存放向量数据库的目录
+
+# 初始化一些youtube视频
+urls = [
+    "https://www.youtube.com/watch?v=HAn9vnJy6S4",
+    "https://www.youtube.com/watch?v=dA1cHGACXCo",
+    "https://www.youtube.com/watch?v=ZcEMLz27sL4",
+    "https://www.youtube.com/watch?v=hvAPnpSfSGo",
+    "https://www.youtube.com/watch?v=EhlPDL4QrWY",
+    "https://www.youtube.com/watch?v=mmBo8nlu2j0",
+]
+
+# socument数组
+docs = []
+for url in urls:
+    try:
+        # 一个视频一个document
+        print(f"正在加载：{url}")
+        docs.extend(load_youtube_video(url))
+    except Exception as e:
+        print(f"加载失败：{url}")
+        print(e)
+
+print(len(docs))
+
+# 给doc添加额外的元数据：视频发布的年份
+for doc in docs:
+    doc.metadata['publish_year'] = datetime.datetime.strptime(
+        doc.metadata['publish_date'],
+        '%Y-%m-%dT%H:%M:%S'
+    ).year
+
+print(docs[0].metadata)
+
+# 根据多个doc构建向量数据库
+# 分割器：chunk_size分割大小，chunk_overlap重叠大小
+splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=30)
+split_docs = splitter.split_documents(docs)
+
+# 存储
+embedding_model = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
+
+# 向量数数据库持久化
+# 持久化 persist_directory=persist_dir
+vector_store = Chroma.from_documents(documents=split_docs, embedding=embedding_model, persist_directory=persist_dir)
+```
+
+加载数据库并进行智能化检索
+```python
+persist_dir = 'chroma_data_dir' # 存放向量数据库的目录
+
+# 存储模型
+embedding_model = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
+
+# 加载向量数据库
+vector_store = Chroma(persist_directory=persist_dir, embedding_function=embedding_model)
+
+# 定义提示词模板
+# 防止模型自动脑补无关信息：If no year is mentioned, leave `publish_year` as null.
+system_message = """"
+    You are an expert at translating user questions into database queries.
+    You have access to a database of tutorial videos on software libraries for building LLM-driven applications.
+    Given a question, generate a list of database queries to optimize to retrieve the most relevant results.
+    If there are abbreviations or words you are not familiar with, don't try to change them.
+    If no year is mentioned, leave `publish_year` as null.
+"""
+
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ('system', system_message),
+        ('human','{question}')
+    ]
+)
+
+# pydantic 数据管理的库
+class Search(BaseModel):
+    """
+    定义了数据模型
+    """
+    # 内容的相似性 发布年份
+    query: str = Field(None, description="Similarity search query applied to video transcripts")
+    publish_year: Optional[int] = Field(None, description="year video was published")
+
+chain = {'question': RunnablePassthrough()} | prompt | model.with_structured_output(Search)
+
+def retrieval(search: Search) -> List[Document]:
+    """
+    检索函数
+    """
+
+    _filter = None
+    if search.publish_year:
+        # 如果年份不为空，则进行检索
+        # $eq是Chroma的查询语法
+        _filter = {'publish_year': {'$eq': search.publish_year}}
+    
+    return vector_store.similarity_search(search.query, filter=_filter)
+
+new_chain = chain | retrieval
+
+# 根据问题进行检索
+# res3 = new_chain.invoke("videos on RAG published in 2024")
+res3 = new_chain.invoke("RAG tutorial")
+print([(doc.metadata['title'], doc.metadata['publish_year']) for doc in res3])
+```
