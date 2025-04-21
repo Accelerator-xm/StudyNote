@@ -12,7 +12,9 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_community.tools import QuerySQLDatabaseTool
 from langchain_community.utilities import SQLDatabase
 from langchain.chains.sql_database.query import create_sql_query_chain
+from langchain.schema.runnable import RunnableLambda
 from operator import itemgetter
+import re
 import my_api_key
 
 # 设置代理
@@ -50,7 +52,6 @@ db = SQLDatabase.from_uri(MYSQL_URI)
 # print(db.get_usable_table_names())  # 查询数据库表明
 # print(db.run("SELECT * FROM users limit 5;"))   # 查询数据表前5行数据
 
-# 直接使用大模型和数据库结合
 # 初始化生成SQL语句的链
 # test_chain = create_sql_query_chain(model, db)
 # 根据问题生成数据库查询语句
@@ -73,13 +74,30 @@ create_sql_chain = create_sql_query_chain(model, db)
 # 创建执行sql语句的工具
 execute_sql_tool = QuerySQLDatabaseTool(db=db)
 
+"""
+不同模型生成的sql语句格式不一样，需要提取出sql语句
+例如："qwen-turbo"生成的sql语句是这样的：SQLQuery: SELECT COUNT(*) AS total_users FROM users;
+有'SQLQuery:'前缀
+"""
+# 提取 SQL 语句的函数
+def extract_sql(text: str) -> str:
+    """返回第一条以 SELECT / INSERT / UPDATE / DELETE 开头、以 ; 结束的 SQL"""
+    m = re.search(r"(?is)(select|insert|update|delete)[\s\S]+?;", text)
+    if m:
+        return m.group(0).strip()
+    raise ValueError("No SQL found in LLM output")
+
+# 添加提取 SQL 的中间步骤
+extract_sql_runnable = RunnableLambda(extract_sql)
+
 
 # 1、生成sql  2、执行sql 
 # 3、提示模板  
 chain = (
     RunnablePassthrough
     .assign(query=create_sql_chain)
-    .assign(result=itemgetter("query") | execute_sql_tool) # 执行sql语句
+    .assign(query=itemgetter("query") | extract_sql_runnable)   # sql: 纯 SQL
+    .assign(result=itemgetter("query") | execute_sql_tool)  # 执行
     | answer_prompt
     | model
     | StrOutputParser()

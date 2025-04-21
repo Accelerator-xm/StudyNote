@@ -1,4 +1,10 @@
 import os
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.append(project_root)
+
+from langchain_community.chat_models.tongyi import ChatTongyi
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.prebuilt import chat_agent_executor
 from langchain_community.utilities import SQLDatabase
@@ -56,7 +62,6 @@ prompt = ChatPromptTemplate.from_messages([
     ("human", "{messages}")
 ])
 
-#如果在执行查询时出现了错误，请重写查询并重试。
 
 # 创建代理
 agent_executor = chat_agent_executor.create_tool_calling_executor(model=model, tools=tools, prompt=prompt)
