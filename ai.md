@@ -643,3 +643,9 @@ new_chain = chain | retrieval
 res3 = new_chain.invoke("RAG tutorial")
 print([(doc.metadata['title'], doc.metadata['publish_year']) for doc in res3])
 ```
+
+### 提取结构化的数据
+
+    从非结构化的文本中提取结构化信息。
+    在自然语言处理(NLP)中，表格数据抽取是一个重要的任务，涉及从文本中提取结构化数据
+
