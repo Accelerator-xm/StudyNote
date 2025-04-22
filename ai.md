@@ -843,3 +843,147 @@ print(res)
     - 自然语言推理
     - 关系分类
     - 事件预测
+
+```python
+class Classification(BaseModel):
+    """
+    用于情感分类的模型
+    """
+    sentiment: str = Field(..., enum=['happy', 'sad', 'neutral'], description="文本的情感")
+    aggressiveness: int = Field(..., enum=[1, 2, 3, 4, 5], description="文本的攻击性,数字越大越攻击性")
+    language: str = Field(description="文本使用的语言")
+
+# 提示模板
+tagging_prompt = ChatPromptTemplate.from_template(
+"""
+从以下段落中提取所需的信息
+只提取'Classification'类的内容
+段落: {text}
+"""
+)
+    
+chain = tagging_prompt | model.with_structured_output(Classification)
+
+text = "我非常生气"
+# text = "更高兴认识你"
+res = chain.invoke(
+    {
+        "text": text
+    }
+)
+print(res)
+```
+
+### 文本自动摘要
+
+    总结文档里的内容
+    pip install tiktoken chromadb
+
+- 总结或组合文档的三种方式
+    - 填充 stuff，简单的将文档连接成一个提示
+    - 映射-规约 Map-reduce，将文档分成批次，总结这些批次，然后总结
+    - 细化 refine：通过顺序迭代文档来更新滚动摘要
+
+
+stuff方式进行摘要:
+直接把整个文档输入，文档可能超出输出token上限，所以可能不是对完整的文档进行总结
+```python
+# 加载文档
+loader = WebBaseLoader('https://lilianweng.github.io/posts/2023-06-23-agent/')
+docs = loader.load()  # 得到整篇文章
+
+# 写法一
+# chain = load_summarize_chain(model, chain_type="stuff")
+# res = chain.invoke(docs)
+# print(res)
+
+# 写法二
+# 定义提示
+prompt_template = """
+针对下面的内容，写一个简介的总结摘要：
+{text}
+简洁的总结摘要, 中文回答
+"""
+prompt = PromptTemplate.from_template(prompt_template)
+
+chain = LLMChain(llm=model, prompt=prompt)
+
+stuff_chain = StuffDocumentsChain(llm_chain=chain, document_variable_name='text')
+
+res = stuff_chain.invoke(docs)
+print(res)
+```
+
+map_reduce方式进行摘要:
+分而治之，把的分成多组，分别进行摘要；
+再把多组摘要分组总结，得到更少组的摘要；
+递归获得最终摘要
+```python
+# 1 切割阶段
+text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
+    chunk_size=1000,  # 每段1000个token
+    chunk_overlap=0,  # 不重叠
+)
+split_docs = text_splitter.split_documents(docs) 
+
+# 2 map阶段
+map_template = """
+以下是一组文档(document):
+{docs}
+根据这个文档列表，请给出总结摘要
+"""
+map_prompt = PromptTemplate.from_template(map_template)
+map_llm_chain = LLMChain(llm=model, prompt=map_prompt)
+
+# 3 reduce阶段
+reduce_template = """
+以下是一组总结摘要：
+{docs}
+将这些内容提炼成一个最终的、同一的总结摘要
+"""
+reduce_prompt = PromptTemplate.from_template(reduce_template)
+reduce_llm_chain = LLMChain(llm=model, prompt=reduce_prompt)
+
+
+# 定义combine链
+combine_chain = StuffDocumentsChain(
+    llm_chain=reduce_llm_chain,
+    document_variable_name="docs"
+)
+
+reduce_chain = ReduceDocumentsChain(
+    # 最终调用的链
+    combine_documents_chain=combine_chain,
+    # 中间汇总的链
+    collapse_documents_chain=combine_chain,
+    # 汇总token数
+    token_max=4000,
+)
+
+# 合并链
+map_reduce_chain = MapReduceDocumentsChain(
+    llm_chain=map_llm_chain,
+    reduce_documents_chain=reduce_chain,
+    document_variable_name="docs",
+    # 不返回中间结果
+    return_intermediate_steps=False
+)
+
+res = map_reduce_chain.invoke(split_docs)
+print(res['output_text'])
+```
+
+refine方式进行摘要（了解）：
+文档链通过循环遍历输入文档并逐步更新答案，
+对于每个文档，将当前文档和最新的中间答案传递给模型，获得最新答案
+```python
+text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
+    chunk_size=1000,  # 每段1000个token
+    chunk_overlap=0,  # 不重叠
+)
+split_docs = text_splitter.split_documents(docs) 
+
+chain = load_summarize_chain(model, chain_type="refine")
+res = chain.invoke(split_docs)
+print(res['output_text'])
+```
