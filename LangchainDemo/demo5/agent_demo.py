@@ -1,6 +1,12 @@
 import os
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.append(project_root)
+
+from langchain_community.chat_models.tongyi import ChatTongyi
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import HumanMessage
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langgraph.prebuilt import chat_agent_executor
 import my_api_key
@@ -22,11 +28,15 @@ my_dashscope_api_key = my_api_key.DashScope_API_KEY
 # 构建代理
 
 # 创建模型
-model = ChatOpenAI(
-    model="openai/gpt-3.5-turbo-1106", 
-    temperature=0,
-    openai_api_key="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",
-    openai_api_base="https://openrouter.ai/api/v1"
+# model = ChatOpenAI(
+#     model="openai/gpt-3.5-turbo-1106", 
+#     temperature=0,
+#     openai_api_key="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",
+#     openai_api_base="https://openrouter.ai/api/v1"
+# )
+model = ChatTongyi(
+    api_key=my_dashscope_api_key,
+    model="qwen-turbo"
 )
 
 # res = model.invoke([HumanMessage(content="武汉今天天气怎么样")])

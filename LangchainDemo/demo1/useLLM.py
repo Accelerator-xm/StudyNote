@@ -1,11 +1,12 @@
 import os
-from langchain_openai import ChatOpenAI
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.append(project_root)
+
 from chat_dashscope import ChatDashScope
-from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from fastapi import FastAPI
-from langserve import add_routes
 import my_api_key
 
 # 设置代理
@@ -44,19 +45,3 @@ chain = prompt_template | model | parser
 print(chain.invoke({'language':'English',
                     'text':'你好,请问要去哪里'
                     }))
-
-
-# # 把我们的程序部署成服务
-# # 创建 fastapi
-# app = FastAPI(title="我的服务", version='v1.0', description="翻译工具")
-
-# add_routes(
-#     app,
-#     chain,
-#     path="/chain"
-# )
-
-# if __name__ == "__main__":
-#     import uvicorn
-
-#     uvicorn.run(app, host="localhost", port=8000)

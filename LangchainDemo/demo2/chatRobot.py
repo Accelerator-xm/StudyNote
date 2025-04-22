@@ -1,5 +1,10 @@
 import os
-from chat_dashscope import ChatDashScope
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '..'))
+sys.path.append(project_root)
+
+from langchain_community.chat_models.tongyi import ChatTongyi
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableWithMessageHistory
@@ -19,7 +24,10 @@ my_dashscope_api_key = my_api_key.DashScope_API_KEY
 # 聊天机器人: 结合历史回答
 
 # 创建模型
-model = ChatDashScope(model='qwen-turbo', dashscope_api_key=my_dashscope_api_key)
+model = ChatTongyi(
+    api_key=my_dashscope_api_key,
+    model="qwen-turbo"
+)
 
 # 定义提示模板
 prompt_template = ChatPromptTemplate.from_messages([
