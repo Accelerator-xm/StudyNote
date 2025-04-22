@@ -649,3 +649,184 @@ print([(doc.metadata['title'], doc.metadata['publish_year']) for doc in res3])
     从非结构化的文本中提取结构化信息。
     在自然语言处理(NLP)中，表格数据抽取是一个重要的任务，涉及从文本中提取结构化数据
 
+```python
+# 定义数据模型
+class Person(BaseModel):
+    """
+    关于一个人的数据模型
+    """
+    name: Optional[str] = Field(default=None, description="表示人的名字")
+
+    hair_color: Optional[str] = Field(
+        default=None, description="如果知道的话，这个人的头发颜色"
+    )
+
+    height_in_meters: Optional[str] = Field(
+        default=None, description="这个人的身高（米）"
+    )
+
+
+# 用于获取多个数据
+class ManyPerson(BaseModel):
+    """
+    关于多个人的数据模型
+    """
+    people: List[Person] = Field(
+        default=[], description="一个人列表"
+    )
+
+
+# 提示模板
+prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            'system',
+            "你是一个专业的提取算法"
+            "只从未结构化文本中提取相关信息"
+            "如果你不知道要提取的属性值"
+            "返回该属性的值未null",
+        ),
+        # 如果需要参考对话上下文，则加上
+        # MessagesPlaceholder(variable_name="history")
+        ('human', "{text}"),
+    ]
+)
+
+chain = {'text': RunnablePassthrough()} | prompt | model.with_structured_output(schema=ManyPerson)
+
+text = """
+    马路上走来一个女生，长长的黑头发披在肩上，大概1米7左右.
+    走在她旁边的是她的男朋友，叫张三，比他高10厘米。
+"""
+res = chain.invoke(text)
+print(res)
+```
+
+### AI自动生成数据
+
+    合成数据是人工生成的数据，用于模拟真实数据，不会泄露隐私或遇到现实世界的限制
+    pip install langchain_experimental
+
+- 优势
+    - 隐私安全：非真是个人数据
+    - 数据增强：扩展机器学习的数据集
+    - 灵活性：创建特定或罕见的场景
+    - 成本效益：通常比现实世界数据收集更便宜
+    - 监管合规：
+    - 模型鲁棒性：可以带来更好的泛化AI模型
+    - 快速原型设计：无需真实数据即可快速测试
+    - 控制实验：模拟特定条件
+    - 数据访问：当数据不可用时的替代方案
+
+
+langchain_experimental 初试：
+
+```python
+# 创建链
+chain = create_data_generation_chain(model)
+
+res = chain.invoke(
+    {
+        'fields':['蓝色', '红色', '绿色'],    #关键词
+        'preferences': {'style': '像诗歌一样'} # 偏好，话题
+    }
+)
+print(res)
+# """
+# 在蓝色的梦之海与红色的烈焰山之间，  
+# 绿色的希望之树静静生长，  
+# 色彩交织成诗，绘出世界的秘密。
+# """
+```
+
+生成结构化数据
+```python
+# 1 定义数据模型
+class MedicalBilling(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    patient_id: str = Field(description="患者ID")
+    patient_name: str = Field(description="患者姓名")
+    diagnosis_code: str = Field(description="诊断代码")
+    procedure_code: str = Field(description="手术代码")
+    total_cost: float = Field(description="总费用")
+    insurance_claim_amount: float = Field(description="保险索赔金额")
+
+
+# 2 提供样例数据
+examples = [
+    {
+        "example": """
+        {{
+            "patient_id": "P001",
+            "patient_name": "张三",
+            "diagnosis_code": "D001",
+            "procedure_code": "PR001",
+            "total_cost": 1500.0,
+            "insurance_claim_amount": 1200.0
+        }}
+        """
+    },
+    {
+        "example": """
+        {{
+            "patient_id": "P002",
+            "patient_name": "王五",
+            "diagnosis_code": "D002",
+            "procedure_code": "PR002",
+            "total_cost": 2000.0,
+            "insurance_claim_amount": 1800.0
+        }}
+        """
+    }
+]
+
+# 3 创建提示模板
+example_template = PromptTemplate(
+    input_variables=["example"],template='{example}'
+)
+
+
+PREFIX = """你是一个医疗数据生成器，请生成符合以下格式的结构化账单数据。
+字段包括：patient_id、patient_name、diagnosis_code、procedure_code、total_cost、insurance_claim_amount。
+以下是几个示例数据："""
+
+SUFFIX = """
+请根据以下指令生成类似结构的 JSON 数据（一次只生成**1**条）：
+主题: {subject}
+补充要求: {extra}
+
+严格要求：
+1. 必须输出单个 JSON 对象（不是数组）。
+2. JSON 放在 ```json ... ``` 代码块中。
+3. 代码块前后不得有任何额外文字。
+"""
+
+prompt_template = FewShotPromptTemplate(
+    prefix=PREFIX,
+    suffix=SUFFIX,
+    examples=examples,
+    example_prompt=example_template,
+    input_variables=["subject", "extra"],
+)
+
+raw_parser = PydanticOutputParser(pydantic_object=MedicalBilling)
+parser = OutputFixingParser.from_llm(parser=raw_parser, llm=model)
+
+# 4 创建结构化数据生成器
+generator = create_openai_data_generator(
+    output_schema=MedicalBilling,
+    llm=model,
+    prompt=prompt_template,
+    output_parser=parser
+)
+
+# 5 调用生成器
+res = generator.generate(
+    subject="生成医疗账单数据",
+    extra="人的名字更符合日常人名；总费用呈现正态分布，均值为 2000，标准差为 500；保险索赔金额呈现正态分布，均值为 1500，标准差为 300；诊断代码和手术代码可以是随机的，但要符合医疗行业的标准。",
+    runs=10     # 生成10条数据
+)
+print(res)
+
+```

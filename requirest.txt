@@ -9,3 +9,4 @@ sentence-transformers
 langgraph
 youtube-transcript-api
 yt_dlp
+langchain_experimental

@@ -6,33 +6,10 @@ project_root = os.path.abspath(os.path.join(current_dir, '..'))
 sys.path.append(project_root)
 
 from langchain_community.chat_models.tongyi import ChatTongyi
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, PromptTemplate
-from langchain_core.runnables import RunnableWithMessageHistory, RunnableLambda, RunnablePassthrough
-from langchain_community.chat_message_histories import ChatMessageHistory
-from langchain_chroma import Chroma
-from langchain.schema import Document
-# from langchain.embeddings import HuggingFaceEmbeddings
-
-from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_community.tools import QuerySQLDatabaseTool
-from langgraph.prebuilt import chat_agent_executor
-from langchain_community.document_loaders import WebBaseLoader, YoutubeLoader
-import bs4
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains.retrieval import create_retrieval_chain
-from langchain.chains.history_aware_retriever import create_history_aware_retriever
-from langchain.chains.sql_database.query import create_sql_query_chain
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
 from pydantic.v1 import BaseModel, Field
-from sqlalchemy import create_engine
-from langchain_community.utilities import SQLDatabase
-from langchain_community.agent_toolkits import SQLDatabaseToolkit
-from operator import itemgetter
-import datetime
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List
 import my_api_key
 
 os.environ["USER_AGENT"] = "MyLangchainApp/0.1"
