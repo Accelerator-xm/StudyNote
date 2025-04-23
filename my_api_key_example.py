@@ -20,3 +20,5 @@ OpenRouter_API_KEY = ''
 # https://bailian.console.aliyun.com/?tab=model#/api-key
 DashScope_API_KEY = ''
 
+# GLM api_key: 智普模型
+GLM_API_KEY = ''
