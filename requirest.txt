@@ -12,3 +12,7 @@ yt_dlp
 langchain_experimental
 tiktoken
 chromadb
+
+zhipuai
+langchainhub
+httpx_sse

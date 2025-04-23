@@ -987,3 +987,7 @@ chain = load_summarize_chain(model, chain_type="refine")
 res = chain.invoke(split_docs)
 print(res['output_text'])
 ```
+
+## 国产大模型
+
+### 智普GLM大模型
