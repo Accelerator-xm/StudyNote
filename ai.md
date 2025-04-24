@@ -1053,5 +1053,9 @@ class WeatherTool(BaseTool):
 
 # 创建工具列表
 tools = [WeatherTool()]
-
 ```
+
+
+### 整合数据库操作
+
+    prompt -> LLM -> SQL -> Function -> DB执行 -> Prompt -> LLM -> Result
