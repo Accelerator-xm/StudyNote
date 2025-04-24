@@ -993,3 +993,65 @@ print(res['output_text'])
 ### 智普GLM大模型
     国产大模型，可以不用翻墙
 
+```python
+model = ChatOpenAI(
+    model="glm-4-air",
+    api_key=my_api_key.GLM_API_KEY,
+    base_url="https://open.bigmodel.cn/api/paas/v4/",
+)
+```
+
+### 自定义tool
+    可以自定义tool扩展功能。
+
+- 以查询天气为例：
+    - 百度天气接口：https://lbsyun.baidu.com/faq/api?title=webapi/weather/base
+    - 自定义Schema：
+    - 自定义Tool类：
+
+```python
+class WeatherInputArgs(BaseModel):
+    """
+    Input的Schema类
+    """
+    location: str = Field(..., description="用于查询天气的位置信息")
+
+class WeatherTool(BaseTool):
+    """
+    查询实时天气的工具
+    """
+    name: str = "weather_tool"
+    description: str = "查询任意位置的当前天气情况"
+    args_schema: Type[WeatherInputArgs] = WeatherInputArgs
+
+    def _run(
+            self,
+            location: str,
+            run_manager: Optional[CallbackManagerForToolRun] = None,
+    ) -> str:
+        """
+        调用工具时执行的函数
+        """
+        district_code = find_code('GLMDemo\demo2\weather_district_id.csv', location)
+
+        print(f"{location}: {district_code}")
+
+        url = f'https://api.map.baidu.com/weather/v1/?district_id={district_code}&data_type=now&ak={baidu_api_key}'
+
+        # 发送请求
+        res = requests.get(url)
+        data = res.json()
+
+        text = data['result']['now']['text']
+        temp = data['result']['now']['temp']
+        feels_like = data['result']['now']['feels_like']
+        rh = data['result']['now']['rh']
+        wind_dir = data['result']['now']['wind_dir']
+        wind_class = data['result']['now']['wind_class']
+
+        return f"当前{location}的天气情况为：{text}，温度为{temp}°C，体感温度为{feels_like}°C，相对湿度为{rh}%，风向为{wind_dir}，风力等级为{wind_class}"
+
+# 创建工具列表
+tools = [WeatherTool()]
+
+```

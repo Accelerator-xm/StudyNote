@@ -22,3 +22,6 @@ DashScope_API_KEY = ''
 
 # GLM api_key: 智普模型
 GLM_API_KEY = ''
+
+# 百度地图api_key：用于获取地图信息
+BaiDuMap_api_key = ''
