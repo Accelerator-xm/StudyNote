@@ -1060,9 +1060,9 @@ tools = [WeatherTool()]
 
     prompt -> LLM -> SQL -> Function -> DB执行 -> Prompt -> LLM -> Result
 
-### RAG文件加载
+### RAG
 
-- 格式
+- 文件加载
     - text
     - csv: CSVLoader
     - json: JSONLoader
@@ -1070,3 +1070,18 @@ tools = [WeatherTool()]
     - markdown: UnstructuredMarkdownLoader
     - pdf: PyPDFLoader
 
+- 文件切割
+    - 通用递归切割器：按回车换行符、句号等切割
+    - 根据标题切割：根据标头（一、 1、 a、 等）
+    - 根据语义切割：类似语义的为一组
+        - 百分位数：计算所有句子间差异的百分位数，超过阈值分割
+        - 标准差：数据的波动程度
+        - 四分位距：语义嵌入空间显著不同的句子
+
+- 向量数据库
+    - Chroma
+    - FAISS
+    - Qdrant
+    - Pinecone
+    - Milvus
+    - LanceDB
