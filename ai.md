@@ -1059,3 +1059,14 @@ tools = [WeatherTool()]
 ### 整合数据库操作
 
     prompt -> LLM -> SQL -> Function -> DB执行 -> Prompt -> LLM -> Result
+
+### RAG文件加载
+
+- 格式
+    - text
+    - csv: CSVLoader
+    - json: JSONLoader
+    - html: WebBaseLoader
+    - markdown: UnstructuredMarkdownLoader
+    - pdf: PyPDFLoader
+

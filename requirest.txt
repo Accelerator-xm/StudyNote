@@ -16,3 +16,7 @@ chromadb
 zhipuai
 langchainhub
 httpx_sse
+unstructured
+jq
+markdown
+rapidocr-onnxruntime
