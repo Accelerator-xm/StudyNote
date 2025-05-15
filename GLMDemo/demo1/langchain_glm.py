@@ -27,6 +27,13 @@ model = ChatOpenAI(
     base_url="https://open.bigmodel.cn/api/paas/v4/",
 )
 
+# qwen的调用方式
+# model = ChatOpenAI(
+#     model="qwen-turbo",
+#     api_key=my_api_key.DashScope_API_KEY,
+#     base_url='https://dashscope.aliyuncs.com/compatible-mode/v1'
+# )
+
 # 定义提示模板
 prompt_template = ChatPromptTemplate.from_messages([
     ('system', '你是一个乐于助人的助手，用{language}尽你所你回答所有问题'),
