@@ -16,6 +16,7 @@
 - **LangChain**: LLM应用开发框架，包含各种组件和工具链
 - **python**: 补充一些python的知识点
 - **ros2**: ros2基础知识
+- **paddlepaddle**: 百度飞浆深度学习框架入门
 
 
 ## 学习进度
@@ -26,5 +27,6 @@
 - [x] Qt
 - [x] LangChain
 - [ ] python
-- [ ] ros2
+- [x] ros2
+- [ ] paddlepaddle
 
