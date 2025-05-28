@@ -607,5 +607,262 @@ key必须是双引号的字符串
     - json.loads(s): json字符串转python数据对象
     - json.load(s,fp): json文件转python数据对象
 
+## 数据分析与可视化
+
+### numpy
+科学计算处理库
+进行矩阵运算、矢量处理、数据变换
+
+- 功能
+    - 读写磁盘上基于数组的数据集进行线性代数运算
+        - 傅里叶变换
+        - 随机数生成
+    - 将其他语言代码集成到pyhton作为算法之间数据传递的容器
+    - 其他语言编写的库可以直接使用numpy数组的数据
+- numpy数组的基本属性
+    - 秩：数组的维数，例如二维数组秩为2
+- ndarray 多维数组：
+    - 说明
+        - 存储单一数据类型
+        - 高效存储大量数值数据
+        - 提高数组运算速度
+    - 创建
+        - np.array(seq, dtype=int)：列表转为数组，会进行数据类型转换
+        - reshape(m,n)：数组重建为m行n列
+        - np.arange(start, end, step): 开始默认0，步长默认1
+        - np.linspace(start, end, n): 等差数组，元素个数n，默认50
+        - np.logspace(start, end, n, base=10): 等比数列, 开始结尾为指数部分，底数base
+        - np.random.rand(m,n): 随机m行n列的矩阵
+        - np.ones(m,n): m行n列的矩阵全1矩阵
+        - np.zores(m,n): m行n列的矩阵全0矩阵
+        - 三角函数
+    - 支持索引和切片
+    ```python
+    import numpy as np
+    # np数组支持多维切片
+    ls1 = np.array([[1,1,1],[2,2,2],[3,3,3]])
+    print(ls1[0:2, 0])  # [1 2]
+    # list不支持
+    ls2 = [[1,1,1],[2,2,2],[3,3,3]]
+    print(ls2[0:2, 0]) # 报错
+    ```
+- ufunc 统一函数对象
+    - 说明
+        - 对数组进行元素级运算以及直接对数组进行数学运算
+        - 以numpy数组作为输出
+    - 运算函数
+        - np.add(a,b) 或 a+b: 对应位置相加
+        - np.multiply(a,b) 或 a*b: 对应位置相乘
+        - np.divide(a,b) 或 a/b: 除
+        - np.floor_divide(a,b) 或 a//b: 整除
+        - np.mod(a,b) 或 a%b: 取余
+        - a**2: 每个元素平方
+        - a%3: 每个元素对3取模
+        - np.exp(a): 每个元素e的a[i]次幂
+        - np.aprt(a): 每个元素开方
+        - np.square(a)：每个元素平方
+    - 统计函数：
+        - sum 求和
+        - min最小值，argmin最小值索引
+        - max最大值，argmax最大值索引
+        - cumsum所有元素相加
+        - mean均值 std标准差 median中位数 var方差
+    - 读取文件中的数据 
+        - getfromtxt(fname文件, dtype数据类型, delimiter分隔符, sfip_header跳过行数, usecols读取哪些列, encoding)
+        - loadtxt 不考虑缺失值
+    - 保存文件
+        - savetxt
+
+### matplotlib
+2D绘图库
+
+#### 折线图
+plt.plot(x,y)  x是横轴序列，y纵轴序列
+plt.show() 显示绘图结果
+增加点的数量使图平滑
+
+- 属性
+    - 线条linestyle
+        - "-"实线
+        - "--"虚线
+        - ":"点线
+        - "-."点划线
+    - 颜色对应英文color
+    - 打点marker
+    - 标签
+        - title()标题 
+        - legend()图注位置
+        - annotate(str, (x,y)) 给(x,y)点注释
+        - xlabel()x轴标签、ybabel()y轴标签
+        - xticks()x轴刻度、yticks()y轴刻度
+        - fontproperties参数：指定字体
+    - rc参数：自定义图形默认值
+        - plt.rcParams["font.sans-serif"] = ["simHei"]  # 指定字体
+        - plt.rcParams["axes.unicode_minus"] = False 解决负号显示方块问题
+    - 坐标轴与直线
+        - xlim(min, max) x轴范围，y同理
+        - axhline(x, ymin, ymax)绘制水平线
+        - axvline(x, ymin, ymax)绘制垂直线
+    - 填充
+        - axhspan()水平区域，axvspan()垂直区域
+        - fill_between()填充两条曲线围起来的区域，区间横坐标限定
+        - fill_betweenx()填充两条曲线围起来的区域，区间纵坐标限定
+    - 多子图绘制
+        - plt.subplot(m,n,index) 把图拆除m*n的区域，选择第index的区域画子图
+    - 保存图片文件
+        - plt.savefig(文件名) 在show()之前，需要pip install piliow
+
+#### 饼图
+
+plt.pie(数据数组, )
+- 参数
+    - explode 需要突出展示的数据位置及突出量，与数据列表一一对应，小数
+    - labels 各部分的标签
+    - labeldistance 文本的位置，到原点的距离与半径的比值
+    - autopct 饼图的文本格式，例如%2.1f%%表示整数2，小数1位
+    - shadow 是否有阴影
+    - startangle 起始角度，逆时针，一般从90开始
+    - pctdistance：文本离圆心的距离相对半径的百分比。
+        
+#### 直方图
+plt.hist(数据数组, )
+- 参数
+    - bins：区间数量，整数
+    - normed：布尔型，是否将频数转换成频率
+    - histtype：类型，'bar'、'barstacked'、'step'、 'stepfilled'
+        - 'bar' 多组数据时，水平并列排放。
+        - 'barstacked' 多组数据时，垂直堆叠摆放。
+        - 'step' 线型轮廓图不填充。
+        - 'stepfilled' 产生线型轮廓图填充缺省颜色。
+    - orientation：可设为horizontal或vertical，水平或竖直
+    返回值：
+    - n：数组或数组的列表，其值为落在每个区间的频度(数量)
+    - bins：一个数组，值为划分的区间的边界数字
+    - patches：用于创建直方图补充参数列表
+
+#### 散点图
+plt.scatter(x序列, y序列, )
+- 参数
+    - c颜色
+    - marker 点的形式，默认为原点
+    - degecolors 轮廓颜色
+
+#### 等值线
+plt.contour() 函数绘制等值线
+contourf() 函数绘制填充等值线
+
+#### 三维图像
+建立三维画布
+多输入一维
+```python
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator
+import numpy as np
+def plot_3d():   
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})    
+    x = np.arange(-5, 5, 0.25)  # 定义x, y
+    y = np.arange(-5, 5, 0.25)    
+    X, Y = np.meshgrid(x, y)  # 生成网格数据    
+    R = np.sqrt(X ** 2 + Y ** 2)  # 计算每个点对的长度
+    Z = np.sin(R)  # 计算Z轴的高度    
+    surf = ax.plot_surface(X, Y, Z, cmap=cm.rainbow, linewidth=0, antialiased=False)    
+    ax.set_zlim(-1.01, 1.01)  # 设置z轴的维度
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter('{x:.02f}')
+    fig.colorbar(surf, shrink=0.5, aspect=5)  # 绘制映射颜色值的色柱
+    
+if __name__ == '__main__':
+    plot_3d()
+    plt.show()
+```
+![](img/3Ddraw.png)
+
+#### 曲线拟合
+scipy.optimize.curve_fit()
+返回值包含拟合曲线的系数 ret[0]
+
+- 参数
+    - f拟合的函数类型
+    - xdata, ydata：拟合点的坐标数组
+
+
+### pandas
+分析结构化数据的工具集
+
+#### 数据结构
+- Series
+    - 说明
+        - 一维数据结构，可以保存任何数据类型
+        - 索引可以是数字或字符串
+        - 由索引列和数据列组成
+    - pd.Series(data, index, dtype, name, copy)
+        - data: 数据列  .values获取 
+        - index: 默认从0开始    .index获取
+        - dtype：数据类型，默认会自己判断
+        - name: 设置名称
+        - copy：是否拷贝数据， 默认False
+    - 可以用字典构造，键为索引 pd.Series(dict)
+    - 支持索引、切片
+- DataFrame
+    - 说明
+        - 二维数据结构，excel表
+        - 两个索引数组index和columns
+        - 可以看成由series组成的字典，键为列名
+    - pd.DataFrame(data, index, columns, dtype, copy)
+        - data: ndarray、series、map、lists、dict
+    - 数据查看
+        - df[列索引] 或者 df.列索引：访问列
+        - df.loc[行索引]：访问行，标签
+        - df.iloc[行索引]：访问行，从0开始，支持切片
+
+#### 数据操作
+- sum对象求和：对每列/行求和，axis=1行、0列
+- cumsum累计求和：x[i][j] += x[i-1][j]
+- idxmax行名称最大值、idxmin最小值
+- 去重
+    - unique，去掉series对象的重复着，返回numpy数组
+    - value_counts，返回series对象，统计每个元素的出现次数，.index可以获取去重后的元素
+- isin(list)比较元素是否属于给定的list,返回布尔矩阵
+- 支持数学运算，同numpy
+    - 数据对齐，通过补NaN对齐
+- 增加数据
+    - 同字典索引赋值, 在原数据上加
+    - append(series, index) 返回新矩阵，原矩阵不变
+- 删除
+    - del df[ind]
+    - df.pop(ind)
+- 查找
+    - df[条件]基于条件筛选
+    - 支持索引查找
+- 文件操作
+    - csv: read_csv(路径, sep, names, encoding)
+    - txt: read_table(路径, sep, names, encoding)
+    - excel: read_excel(路径, sep, names, encoding)
+
+### jieba
+中文文本需要通过分词获得单个单词
+利用中文词库，确定中文字符之间的关联概率
+概率大的组成词组，形成分词结果
+用户还可以自定义词组
+
+- 分词模式jieba.lcut(s)
+    - jieba.lcut(s) 精确模式：精确切割成若干单词，没有冗余，可以还原原文本
+    - jieba.lcut(s, cut_all=true) 全模式：按照各个可能的组合切割，会有冗余
+    - jieba.lcut_for_search(s) 搜索引擎模式：精确模式基础上，对长单词进一步切割，有冗余
+
+### wordcloud词云
+- 根据词频生成词云
+    - fit_words(frequencies)
+    - generate_from_frequencies(frequencies)
+- 根据文本生成词云
+    - generate(text)
+    - generate_from_text(text)
+- process_text(text) 长文本分词取出stopwords, 返回词频字典
+- recolor() 重着色
+- to_array() 转为numpy数组
+- to_file() 导出为图片文件
+
+
 
 
