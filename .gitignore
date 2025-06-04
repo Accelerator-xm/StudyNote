@@ -4,4 +4,7 @@ LLMstudy/my_api_key.py
 LLMstudy/test.py
 
 # pythonStudy
-pythonStudy/output.py
+output.py
+
+# PPStudy
+PPStudy/demo/sale_predict/LR_model.pdparams

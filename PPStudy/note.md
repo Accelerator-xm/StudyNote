@@ -209,11 +209,249 @@ plt.show()
 ![](img/img01/saledemo2.png)
 
 
+## 2 paddle构建模型
 
-paddlepaddle流程
+### 深度学习
+- 相比于机器学习的优点
+    - 用到计算图
+    - 偏导计算简便
+    - 移植GPU、CPU更简单
+    - 运行高效
+- 本质
+    - 用简单的网络逼近复杂的网络
+    - 从大量无标签的样本找到数据的特征
+
+### 环境搭建
+- 查看cuda配置
+```bash
+nvcc --version
+```
+
+```
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2024 NVIDIA Corporation
+Built on Wed_Oct_30_01:18:48_Pacific_Daylight_Time_2024
+Cuda compilation tools, release 12.6, V12.6.85
+Build cuda_12.6.r12.6/compiler.35059454_0
+```
+
+- 查看显卡使用情况
+```bash
+nvidia-smi
+```
+
+```
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 561.17                 Driver Version: 561.17         CUDA Version: 12.6     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                  Driver-Model | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3050 ...  WDDM  |   00000000:01:00.0  On |                  N/A |
+| N/A   50C    P0             10W /   65W |    1377MiB /   4096MiB |      3%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+```
+
+- 环境搭建
+```bash
+conda create -m mypaddle python=3.10
+conda activate mypaddle
+# 安装cudatoolkit 11.8
+conda install -c conda-forge cudatoolkit=11.8
+# 如果你需要cudnn（用于深度学习）
+conda install -c conda-forge cudnn=8.4.1
+pip install paddlepaddle-gpu==2.6.2 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
+```
+
+- 验证环境
+```python
+import paddle
+print(paddle.__version__)
+# 检查CUDA是否可用
+print("CUDA是否可用:", paddle.device.is_compiled_with_cuda())
+
+# 获取CUDA版本
+if paddle.device.is_compiled_with_cuda():
+    # 获取CUDA运行时版本
+    print(paddle.version.cuda())
+    
+    # 获取当前设备信息
+    print("GPU设备数量:", paddle.device.cuda.device_count())
+    
+    # 显示GPU设备名称
+    for i in range(paddle.device.cuda.device_count()):
+        print(f"设备 {i} 名称:", paddle.device.cuda.get_device_name(i))
+```
+
+```
+2.6.2
+CUDA是否可用: True
+11.8
+GPU设备数量: 1
+设备 0 名称: NVIDIA GeForce RTX 3050 Ti Laptop GPU
+```
+
+### paddlepaddle流程
+
+#### 波士顿房价预测
+
 - 加载库文件
+```python
+import paddle
+import paddle.nn as nn
+from paddle.nn import Linear
+import numpy as np
+import os
+import pandas as pd
+import random
+
+```
+
 - 预处理数据
+```python
+# 数据预处理
+def load_data():
+    ## 加载数据集
+    df =  pd.read_csv("BostonHousing.csv")
+    features = list(df.columns)
+    datas = df.values
+
+    ## 数据集划分
+    radio = 0.8
+    offset = int(datas.shape[0] * radio)
+    train_data = datas[:offset]
+   
+    ### 计算train数据集的最大值，最小值，平均值
+    ### axis=0列处理
+    maximuns = train_data.max(axis=0)
+    minimus = train_data.min(axis=0)
+    avgs = train_data.sum(axis=0)/train_data.shape[0]
+    
+    global max_values, min_values, avg_values
+    max_values = maximuns
+    min_values = minimus
+    avg_values = avgs
+
+    ## 数据归一化处理  min-max 归一化
+    for i in range(len(features)):
+        datas[:, i] = (datas[:, i] - minimus[i]) / (maximuns[i] - minimus[i])
+
+    # 训练集和测试及划分  
+    train_data = datas[:offset]
+    test_data = datas[offset:]
+
+    return train_data, test_data
+
+```
+**注意：**归一化（或标准化）时只用训练集的最大值、最小值、均值等统计量，这是为了防止“数据泄漏”，这样做可以保证模型在实际应用时，只依赖训练阶段获得的归一化参数，和真实场景一致。
+
+
 - 搭建神经网络
+```python
+class Regressor(nn.Layer):
+    ## 定义网络层
+    def __init__(self):
+        super(Regressor, self).__init__()
+        ## 定义一层全连接层，输出维度为1，不适用激活函数
+        self.fc = Linear(in_features=13, out_features=1)
+
+    ## 前向计算forward
+    def forward(self, inputs):
+        x  = self.fc(inputs)
+        return x
+```
+
 - 配置训练
+```python
+# 配置训练
+## 声明模型实例
+model = Regressor() 
+### 开启训练模式
+model.train()   
+## 加载训练和测试数据
+train_data, test_data = load_data()
+## 设置优化算法和学习率
+### 优化器
+opt = paddle.optimizer.SGD(learning_rate=0.01, parameters=model.parameters())
+```
+
 - 训练模型
+    - 训练状态.train()
+    - 预测状态.eval()
+
+采用内外层循环：假设数据集样本1000，一个批次(batch)有10个样本，批次数量100 (10/100)
+
+```python
+epoch_num = 10
+batch_size = 10
+
+for epoch_id in range(epoch_num):
+    ## 数据准备
+    ### 打乱训练集
+    np.random.shuffle(train_data)
+    ### 数据拆分：0-10一组，10-20一组...
+    mini_batches = [train_data[k:k+batch_size] for k in range(0, len(train_data), batch_size)]
+
+    for iter_id, mini_batche in enumerate(mini_batches):
+        ### 划分特征和标签
+        x = np.array(mini_batche[:, :-1]).astype("float32")
+        y = np.array(mini_batche[:, -1]).astype("float32")
+        ### 转换成动态图
+        house_feature = paddle.to_tensor(x)
+        prices = paddle.to_tensor(y)
+
+        ## 前向计算
+        predict = model(house_feature)
+
+        ## 计算损失
+        loss = paddle.nn.functional.mse_loss(predict, label=prices)
+        avg_loss= paddle.mean(loss)
+
+        if iter_id%20 == 0:
+            print(f"epoch:{epoch_id}, iter:{iter_id}, loss:{avg_loss.numpy()}")
+
+        ## 反向传播: 梯度下降
+        avg_loss.backward()
+        opt.minimize(avg_loss)  # 最小化loss，更新参数
+        model.clear_gradients() # 消除梯度
+```
+
 - 保存测试文件
+```python
+## 保存模型
+paddle.save(model.state_dict(), "PPStudy/demo/sale_predict/LR_model.pdparams")
+print("模型保存成功")
+
+## 推理测试
+def load_one_example(data_file):
+    df = pd.read_csv(data_file)
+    datas = df.values
+
+    ### 选择倒数第10行数据用于测试
+    one_data = datas[-10]
+
+    ### 归一化
+    for i in range(len(one_data)-1):
+        one_data[i] = (one_data[i] - min_values[i]) / (max_values[i] - min_values[i])
+
+    data = np.reshape(np.array(one_data[:-1]), [1,-1]).astype(np.float32)
+    label = one_data[-1]
+    return data, label
+
+### 加载模型
+model_dict = paddle.load("PPStudy/demo/sale_predict/LR_model.pdparams")
+model.load_dict(model_dict)
+model.eval()    # 预测状态
+
+### 加载测试集
+test_data, label = load_one_example("PPStudy/demo/sale_predict/BostonHousing.csv")
+test_data = paddle.to_tensor(test_data)
+results = model(test_data)
+
+### 反归一化处理
+results = results * (max_values[-1] - min_values[-1]) + min_values[-1]
+print(f"infer: {results.numpy()}, label:{label}")
+# infer: [[21.360323]], label:19.7
+```
