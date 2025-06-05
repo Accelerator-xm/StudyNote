@@ -10,7 +10,7 @@ import random
 def load_data():
     ## 加载数据集
     df =  pd.read_csv("PPStudy/demo/sale_predict/BostonHousing.csv")
-    print(df[:2])
+    # print(df[:2])
     features = list(df.columns)
     # print(features)
     datas = df.values
@@ -122,8 +122,8 @@ paddle.save(model.state_dict(), "PPStudy/demo/sale_predict/LR_model.pdparams")
 print("模型保存成功")
 
 ## 推理测试
-def load_one_example(data_file):
-    df = pd.read_csv(data_file)
+def load_one_example():
+    df = pd.read_csv("PPStudy/demo/sale_predict/BostonHousing.csv")
     datas = df.values
 
     ### 选择倒数第10行数据用于测试
@@ -143,7 +143,7 @@ model.load_dict(model_dict)
 model.eval()    # 预测状态
 
 ### 加载测试集
-test_data, label = load_one_example("PPStudy/demo/sale_predict/BostonHousing.csv")
+test_data, label = load_one_example()
 test_data = paddle.to_tensor(test_data)
 results = model(test_data)
 
