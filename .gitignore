@@ -8,3 +8,42 @@ output.py
 
 # PPStudy
 PPStudy/demo/sale_predict/LR_model.pdparams
+
+# Python 缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# 敏感文件和API密钥
+*api_key*
+*.env
+.env*
+config.py
+secrets.py
+operation.md
+
+# IDE 和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 临时文件
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# 模型文件和大文件
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.model
+*.weights
