@@ -26,7 +26,7 @@
 - [x] django drf
 - [x] Qt
 - [x] LangChain
-- [ ] python
+- [x] python
 - [x] ros2
 - [ ] paddlepaddle
 
