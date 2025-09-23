@@ -17,6 +17,7 @@
 - **python**: 补充一些python的知识点
 - **ros2**: ros2基础知识
 - **paddlepaddle**: 百度飞浆深度学习框架入门
+- **理解ai**: 从函数到transformer
 
 
 ## 学习进度
