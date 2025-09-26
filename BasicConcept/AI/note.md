@@ -459,6 +459,18 @@ GPT的底层为transformer的解码器部分, 根据前面的词猜下一个词
     - **思维链**: 从推理能力方向增强模型能力的方式
     - **RLHF**: 通过人类反馈的强化学习, 让模型回答更符合人的方法
 
+- 指标
+    - **Precision精确率**: 模型**准确性**. 输出的结果中正确结果的占比
+    - **Recall召回率**: **找全**正确答案的能力. 输出的结果中正确的结果占库中所有正确结果的多少
+    - **F1-socre**: 平衡精确率和召回率, F1 = 2 * (Precision * Recall) / (Precision + Recall)
+    - **mAP平均精度均值**: Mean Average Precision. 在所有召回率水平上计算精确率平均值AP, 对所有查询的AP求均值
+    - **MRR平均倒数排名**: Mean Reciprocal Rank, 第一个正确答案的排序位置. 每个查询，取第一个正确答案的排名的倒数, 计算平均值
+    - **nDCG归一化折损累积增益**: Normalized Discounted Cumulative Gain, 衡量分级相关性的排序质量. 对每个结果的相关性排序, 并对排名靠后的结果进行折损.
+    - **Pass@1**: **一次做对**的能力. 在所有测试中, 模型第一次输出结果是正确答案的占比
+    - **Pass@k**: 在生成 K 个候选方案时，至少有一个能通过单元测试的概率. \(pass@k =\mathbb{E}_{problems }\left[1-\frac{\left(\begin{array}{c}n-c \\ k\end{array}\right)}{\left(\begin{array}{c}n \\ k\end{array}\right)}\right]\)
+    - **BLEU双语评估替补**: 比较生成代码与参考代码在n-gram重叠度上帝相似性. **局限性较大**, 同一功能的代码有很多写法
+    - **CodeBLEU**: 引入代码抽象树(AST)和数据流(Data Flow)的匹配度
+
 - 应用相关
     - **生成式AI**: 根据输入自动生成新内容的AI, 包括文本、图像、声音、视频
     - **Token**: 最小粒度的词(词向量)
