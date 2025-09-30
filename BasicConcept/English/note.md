@@ -3,8 +3,10 @@
 ## 软件工程与架构
 - Software Development Lifecycle (SDLC)：软件开发生命周期，涵盖需求到退役  
 - Continuous Integration (CI)：持续集成，高频合并与自动构建  
-- Continuous Delivery (CD)：持续交付，随时可发布  
-- Continuous Deployment (CD)：持续部署，自动上线生产  
+    - 开发团队频繁将代码提交到共享仓库，通过自动化工具实时执行编译、测试，快速发现代码冲突或功能错误
+- Continuous Deployment/Delivery (CD)：持续部署/交付，随时可发布  
+    - 在 CI 基础上，进一步自动化代码部署到测试 / 生产环境
+- Pull Request (PR)：拉取请求，请求将分支代码合并到主分支
 - Infrastructure as Code (IaC)：基础设施即代码，用代码管理环境  
 - Application Programming Interface (API)：应用程序接口，系统交互契约  
 - Remote Procedure Call (RPC)：远程过程调用，像本地函数调用远端  
@@ -114,3 +116,5 @@
 - Retrieval：检索，从库中找到相关信息  
 - Embedding Search：向量检索，基于向量相似度搜索 
 
+## 编译
+Intermediate Representation (IR)：中间表示，中间代码
